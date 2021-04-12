@@ -1,0 +1,197 @@
+from random import random, randint, sample, uniform
+from operator import itemgetter
+import numpy as np
+
+'''
+REPRESENTATION
+'''
+
+def float_to_bin(number,max_domain,prec):
+    # Defining the lenght of the cromosome
+    approx_max_domain = int(max_domain * 10**(prec))
+    max_domain_bin = bin(approx_max_domain).lstrip("0b") 
+    len_max = len(max_domain_bin)
+
+    sign = 0
+    # Use prec to define max lenght for decimals
+    approx_number = int(number * 10**(prec))
+    if number < 0:
+        sign += 1
+        approx_number *= -1
+    number_bin_str = bin(approx_number).lstrip("0b") 
+    
+    # We add the zeros at the beginning of the bin represented number
+    len_numb = len(number_bin_str)
+    diff_len = len_max - len_numb
+    if diff_len > 0:
+        for _ in range(diff_len):
+            number_bin_str = '0' + number_bin_str
+    if sign == 0:
+        number_bin_str = '0' + number_bin_str
+    else:
+        number_bin_str = '1' + number_bin_str
+        
+    return(number_bin_str)
+
+def bin_to_float(numb, prec):
+    if numb[0] == 0:
+        sign = 1
+    else:
+        sign = -1
+    numb = numb[1:]
+    numb = ''.join(str(i) for i in numb)
+    approx_numb = int(numb,2)/10**prec
+    return(approx_numb * sign)
+
+def phenotype(geno, dimension, precision):
+    pheno = []
+    len_mono_cromo = int(len(geno)/dimension)
+    for i in range(0, len(geno), len_mono_cromo):
+        pheno.append(bin_to_float(geno[i:i+len_mono_cromo], precision))
+    return pheno
+
+'''
+STEP 0 - FITNESS
+
+def fitness(geno, f):
+    return f(phenotype(indiv))
+'''
+
+
+'''
+STEP 1 - INITIALIZE POPULATION
+'''
+
+# Initialize population
+def gera_pop(size_pop, max_domain, precision, dimension):
+    return [(gera_indiv(max_domain,precision, dimension),0) for _ in range(size_pop)]
+
+def gera_indiv(max_domain, precision, dimension):
+    indiv = ''
+    for _ in range(dimension):
+        # random initialization
+        x = np.random.uniform(-max_domain, max_domain)
+        # convert to bin
+        indiv += float_to_bin(x, max_domain, precision)
+        indiv = [int(indiv[i]) for i in range (len(indiv))]
+    return indiv
+
+
+'''
+STEP 2 - PARENTS SELECTION
+'''
+
+# Parents Selection: tournament
+def tour_sel(t_size):
+    def tournament(pop):
+        size_pop= len(pop)
+        mate_pool = []
+        for i in range(size_pop):
+            winner = one_tour(pop,t_size)
+            mate_pool.append(winner)
+        return mate_pool
+    return tournament
+
+def one_tour(population,size):
+    """Maximization Problem. Deterministic"""
+    pool = sample(population, size)
+    pool.sort(key=itemgetter(1), reverse=True)
+    return pool[0]
+
+'''
+STEP 3 - VARIATION OPERATOR
+'''
+
+# Binary mutation
+def muta_bin(indiv,prob_muta):
+    # Mutation by gene
+    cromo = indiv[:]
+    for i in range(len(indiv)):
+        cromo[i] = muta_bin_gene(cromo[i],prob_muta)
+    return cromo
+
+def muta_bin_gene(gene, prob_muta):
+    g = gene
+    value = random()
+    if value < prob_muta:
+        g ^= 1
+    return g
+
+# Uniform crossover
+def uniform_cross(indiv_1, indiv_2,prob_cross):
+    value = random()
+    if value < prob_cross:
+        cromo_1 = indiv_1[0]
+        cromo_2 = indiv_2[0]
+        f1=[]
+        f2=[]
+        for i in range(0,len(cromo_1)):
+            if random() < 0.5:
+                f1.append(cromo_1[i])
+                f2.append(cromo_2[i])
+            else:
+                f1.append(cromo_2[i])
+                f2.append(cromo_1[i])
+        return ((f1,0),(f2,0))
+    else:
+        return (indiv_1,indiv_2)
+    
+# Transposition
+'''
+DA FARE!!!!!
+'''
+
+'''
+STEP 4 - SURVIVALS SELECTION
+'''
+
+# Survivals Selection: elitism
+def sel_survivors_elite(elite):
+    def elitism(parents,offspring):
+        size = len(parents)
+        comp_elite = int(size* elite)
+        offspring.sort(key=itemgetter(1), reverse=True)
+        parents.sort(key=itemgetter(1), reverse=True)
+        new_population = parents[:comp_elite] + offspring[:size - comp_elite]
+        return new_population
+    return elitism
+
+def best_pop(populacao):
+    populacao.sort(key=itemgetter(1),reverse=True)
+    return populacao[0]
+
+
+'''
+EVOLUTIONARY ALGORITHM
+'''
+
+# Binary Evolutionary Algorithm
+def ea(numb_generations, size_pop, prob_mut, prob_cross,
+       sel_parents, recombination, mutation, sel_survivors,
+       fitness_func, dimension, max_domain, precision):
+    
+    # inicialize population: indiv = (cromo,fit)
+    populacao = gera_pop(size_pop, max_domain, precision, dimension)
+    # evaluate population
+    populacao = [(indiv[0], fitness_func(indiv[0], dimension, precision)) for indiv in populacao]
+    for i in range(numb_generations):
+        # sparents selection
+        mate_pool = sel_parents(populacao)
+    # Variation
+    # ------ Crossover
+        progenitores = []
+        for i in  range(0,size_pop-1,2):
+            indiv_1= mate_pool[i]
+            indiv_2 = mate_pool[i+1]
+            filhos = recombination(indiv_1,indiv_2, prob_cross)
+            progenitores.extend(filhos) 
+        # ------ Mutation
+        descendentes = []
+        for cromo,fit in progenitores:
+            novo_indiv = mutation(cromo,prob_mut)
+            descendentes.append((novo_indiv,fitness_func(novo_indiv, dimension, precision)))
+        # New population
+        populacao = sel_survivors(populacao,descendentes)
+        # Evaluate the new population
+        populacao = [(indiv[0], fitness_func(indiv[0], dimension, precision)) for indiv in populacao]     
+    return best_pop(populacao)
