@@ -129,9 +129,11 @@ def uniform_cross(indiv_1, indiv_2,prob_cross,max_domain,precision,dimension):
     if value < prob_cross:
         cromo_1 = indiv_1[0]
         cromo_2 = indiv_2[0]
-        f1=[]
-        f2=[]
+        #f1=[]
+        #f2=[]
         while True:
+            f1 = []
+            f2 = []
             for i in range(0,len(cromo_1)):
                 if random() < 0.5:
                     f1.append(cromo_1[i])
@@ -150,7 +152,8 @@ def uniform_cross(indiv_1, indiv_2,prob_cross,max_domain,precision,dimension):
     
 # Transposition
 '''
-DA FARE!!!!!
+def transposition(flanking):
+
 '''
 
 '''
