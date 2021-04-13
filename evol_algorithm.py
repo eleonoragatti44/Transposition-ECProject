@@ -40,7 +40,7 @@ def bin_to_float(numb, prec):
         sign = -1
     numb = numb[1:]
     numb = ''.join(str(i) for i in numb)
-    approx_numb = int(numb,2)/10**prec
+    approx_numb = int(numb,2)/(10**prec)
     return(approx_numb * sign)
 
 def phenotype(geno, dimension, precision):
@@ -73,7 +73,7 @@ def gera_indiv(max_domain, precision, dimension):
         x = np.random.uniform(-max_domain, max_domain)
         # convert to bin
         indiv += float_to_bin(x, max_domain, precision)
-        indiv = [int(indiv[i]) for i in range (len(indiv))]
+    indiv = [int(indiv[i]) for i in range (len(indiv))]
     return indiv
 
 
@@ -95,7 +95,7 @@ def tour_sel(t_size):
 def one_tour(population,size):
     """Maximization Problem. Deterministic"""
     pool = sample(population, size)
-    pool.sort(key=itemgetter(1), reverse=True)
+    pool.sort(key=itemgetter(1))
     return pool[0]
 
 '''
@@ -103,11 +103,17 @@ STEP 3 - VARIATION OPERATOR
 '''
 
 # Binary mutation
-def muta_bin(indiv,prob_muta):
+def muta_bin(indiv,prob_muta,max_domain,dimension,prec):
     # Mutation by gene
     cromo = indiv[:]
+    temp = indiv[:]
     for i in range(len(indiv)):
-        cromo[i] = muta_bin_gene(cromo[i],prob_muta)
+        temp[i] = muta_bin_gene(temp[i],prob_muta)
+        pheno = phenotype(temp,dimension,prec)
+        # We control that the mutated cromosome doesn not correspond to a float value out from the domain
+        for x in pheno:
+            if x < max_domain: 
+                cromo[i] = temp[i]
     return cromo
 
 def muta_bin_gene(gene, prob_muta):
@@ -118,21 +124,27 @@ def muta_bin_gene(gene, prob_muta):
     return g
 
 # Uniform crossover
-def uniform_cross(indiv_1, indiv_2,prob_cross):
+def uniform_cross(indiv_1, indiv_2,prob_cross,max_domain,precision,dimension):
     value = random()
     if value < prob_cross:
         cromo_1 = indiv_1[0]
         cromo_2 = indiv_2[0]
         f1=[]
         f2=[]
-        for i in range(0,len(cromo_1)):
-            if random() < 0.5:
-                f1.append(cromo_1[i])
-                f2.append(cromo_2[i])
-            else:
-                f1.append(cromo_2[i])
-                f2.append(cromo_1[i])
-        return ((f1,0),(f2,0))
+        while True:
+            for i in range(0,len(cromo_1)):
+                if random() < 0.5:
+                    f1.append(cromo_1[i])
+                    f2.append(cromo_2[i])
+                else:
+                    f1.append(cromo_2[i])
+                    f2.append(cromo_1[i])
+            pheno1 = phenotype(f1,dimension,precision)  
+            pheno2 = phenotype(f2,dimension,precision)
+            pheno = pheno1+pheno2
+            pheno.sort()
+            if(pheno[-1] <= max_domain):
+                return ((f1,0),(f2,0))
     else:
         return (indiv_1,indiv_2)
     
@@ -150,14 +162,14 @@ def sel_survivors_elite(elite):
     def elitism(parents,offspring):
         size = len(parents)
         comp_elite = int(size* elite)
-        offspring.sort(key=itemgetter(1), reverse=True)
-        parents.sort(key=itemgetter(1), reverse=True)
+        offspring.sort(key=itemgetter(1))
+        parents.sort(key=itemgetter(1))
         new_population = parents[:comp_elite] + offspring[:size - comp_elite]
         return new_population
     return elitism
 
 def best_pop(populacao):
-    populacao.sort(key=itemgetter(1),reverse=True)
+    populacao.sort(key=itemgetter(1))
     return populacao[0]
 
 
@@ -183,12 +195,12 @@ def ea(numb_generations, size_pop, prob_mut, prob_cross,
         for i in  range(0,size_pop-1,2):
             indiv_1= mate_pool[i]
             indiv_2 = mate_pool[i+1]
-            filhos = recombination(indiv_1,indiv_2, prob_cross)
+            filhos = recombination(indiv_1,indiv_2, prob_cross,max_domain,precision,dimension)
             progenitores.extend(filhos) 
         # ------ Mutation
         descendentes = []
         for cromo,fit in progenitores:
-            novo_indiv = mutation(cromo,prob_mut)
+            novo_indiv = mutation(cromo,prob_mut,max_domain,dimension,precision)
             descendentes.append((novo_indiv,fitness_func(novo_indiv, dimension, precision)))
         # New population
         populacao = sel_survivors(populacao,descendentes)
