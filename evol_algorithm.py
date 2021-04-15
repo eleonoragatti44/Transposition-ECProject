@@ -5,8 +5,13 @@ import numpy as np
 '''
 REPRESENTATION
 '''
-
-def float_to_bin(number,max_domain,prec):
+def cromo_len(max_domain, prec):
+    approx_max_domain = int(max_domain * 10**(prec))
+    max_domain_bin = bin(approx_max_domain).lstrip("0b") 
+    len_max = len(max_domain_bin)
+    return len
+    
+def float_to_bin(number, max_domain, prec):
     # Defining the lenght of the cromosome
     approx_max_domain = int(max_domain * 10**(prec))
     max_domain_bin = bin(approx_max_domain).lstrip("0b") 
@@ -63,8 +68,10 @@ STEP 1 - INITIALIZE POPULATION
 '''
 
 # Initialize population
-def gera_pop(size_pop, max_domain, precision, dimension):
-    return [(gera_indiv(max_domain,precision, dimension),0) for _ in range(size_pop)]
+def gera_pop(max_domain, precision, dimension):
+    def pop(size_pop, size_cromo):
+        return [(gera_indiv(max_domain, precision, dimension),0) for _ in range(size_pop)]
+    return pop
 
 def gera_indiv(max_domain, precision, dimension):
     indiv = ''
@@ -103,18 +110,20 @@ STEP 3 - VARIATION OPERATOR
 '''
 
 # Binary mutation
-def muta_bin(indiv,prob_muta,max_domain,dimension,prec):
-    # Mutation by gene
-    cromo = indiv[:]
-    temp = indiv[:]
-    for i in range(len(indiv)):
-        temp[i] = muta_bin_gene(temp[i],prob_muta)
-        pheno = phenotype(temp,dimension,prec)
-        # We control that the mutated cromosome doesn not correspond to a float value out from the domain
-        for x in pheno:
-            if x < max_domain: 
-                cromo[i] = temp[i]
-    return cromo
+def muta_bin(prob_muta,max_domain,dimension,prec):
+    def mutation(indiv, prob_muta):
+        # Mutation by gene
+        cromo = indiv[:]
+        temp = indiv[:]
+        for i in range(len(indiv)):
+            temp[i] = muta_bin_gene(temp[i],prob_muta)
+            pheno = phenotype(temp,dimension,prec)
+            # We control that the mutated cromosome doesn not correspond to a float value out from the domain
+            for x in pheno:
+                if x < max_domain: 
+                    cromo[i] = temp[i]
+        return cromo
+    return mutation
 
 def muta_bin_gene(gene, prob_muta):
     g = gene
@@ -124,31 +133,33 @@ def muta_bin_gene(gene, prob_muta):
     return g
 
 # Uniform crossover
-def uniform_cross(indiv_1, indiv_2,prob_cross,max_domain,precision,dimension):
-    value = random()
-    if value < prob_cross:
-        cromo_1 = indiv_1[0]
-        cromo_2 = indiv_2[0]
-        #f1=[]
-        #f2=[]
-        while True:
-            f1 = []
-            f2 = []
-            for i in range(0,len(cromo_1)):
-                if random() < 0.5:
-                    f1.append(cromo_1[i])
-                    f2.append(cromo_2[i])
-                else:
-                    f1.append(cromo_2[i])
-                    f2.append(cromo_1[i])
-            pheno1 = phenotype(f1,dimension,precision)  
-            pheno2 = phenotype(f2,dimension,precision)
-            pheno = pheno1+pheno2
-            pheno.sort()
-            if(pheno[-1] <= max_domain):
-                return ((f1,0),(f2,0))
-    else:
-        return (indiv_1,indiv_2)
+def uniform_cross(prob_cross, max_domain, precision, dimension):
+    def crossover(indiv_1, indiv_2, prob_cross):
+        value = random()
+        if value < prob_cross:
+            cromo_1 = indiv_1[0]
+            cromo_2 = indiv_2[0]
+            #f1=[]
+            #f2=[]
+            while True:
+                f1 = []
+                f2 = []
+                for i in range(0,len(cromo_1)):
+                    if random() < 0.5:
+                        f1.append(cromo_1[i])
+                        f2.append(cromo_2[i])
+                    else:
+                        f1.append(cromo_2[i])
+                        f2.append(cromo_1[i])
+                pheno1 = phenotype(f1, dimension, precision)  
+                pheno2 = phenotype(f2, dimension, precision)
+                pheno = pheno1+pheno2
+                pheno.sort()
+                if(pheno[-1] <= max_domain):
+                    return ((f1,0),(f2,0))
+        else:
+            return (indiv_1,indiv_2)
+    return crossover
     
 # Transposition
 '''
@@ -209,4 +220,37 @@ def ea(numb_generations, size_pop, prob_mut, prob_cross,
         populacao = sel_survivors(populacao,descendentes)
         # Evaluate the new population
         populacao = [(indiv[0], fitness_func(indiv[0], dimension, precision)) for indiv in populacao]     
+    return best_pop(populacao)
+
+
+'''
+!!!!!INTOCCABILE!!!!!
+'''
+
+def sea(numb_generations, size_pop, size_cromo, prob_mut, prob_cross, sel_parents, recombination, mutation, sel_survivors, fitness_func, gera_pop):
+    # inicialize population: indiv = (cromo,fit)
+    populacao = gera_pop(size_pop,size_cromo)
+    # evaluate population
+    populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao]
+    for i in range(numb_generations):
+        print(i, end='\r')
+        # sparents selection
+        mate_pool = sel_parents(populacao)
+    # Variation
+        # ------ Crossover
+        progenitores = []
+        for i in  range(0,size_pop-1,2):
+            indiv_1= mate_pool[i]
+            indiv_2 = mate_pool[i+1]
+            filhos = recombination(indiv_1,indiv_2, prob_cross)
+            progenitores.extend(filhos) 
+        # ------ Mutation
+        descendentes = []
+        for cromo,fit in progenitores:
+            novo_indiv = mutation(cromo,prob_mut)
+            descendentes.append((novo_indiv,fitness_func(novo_indiv)))
+        # New population
+        populacao = sel_survivors(populacao,descendentes)
+        # Evaluate the new population
+        populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao]     
     return best_pop(populacao)
