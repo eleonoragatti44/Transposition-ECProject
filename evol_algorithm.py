@@ -125,6 +125,7 @@ def muta_bin(prob_muta,max_domain,dimension,prec):
         return cromo
     return mutation
 
+
 def muta_bin_gene(gene, prob_muta):
     g = gene
     value = random()
@@ -132,15 +133,55 @@ def muta_bin_gene(gene, prob_muta):
         g ^= 1
     return g
 
-# Uniform crossover
+
+# New version with different boundary process
+# Uniform crossover 
+def uniform_cross(prob_cross, max_domain, precision, dimension):
+    def crossover(indiv_1, indiv_2, prob_cross):
+        max_domain_bin = float_to_bin(max_domain, max_domain, precision) # binary string representing the domain boundary
+        max_domain_bin =[int(max_domain_bin[i]) for i in range (len(max_domain_bin))] # binary list
+        min_domain_bin = max_domain_bin
+        min_domain_bin[0] = 1
+        value = random()
+        if value < prob_cross:
+            cromo_1 = indiv_1[0]
+            cromo_2 = indiv_2[0]
+            f1 = []
+            f2 = []
+            for i in range(0,len(cromo_1)):
+                if random() < 0.5:
+                    f1.append(cromo_1[i])
+                    f2.append(cromo_2[i])
+                else:
+                    f1.append(cromo_2[i])
+                    f2.append(cromo_1[i])
+            pheno1 = phenotype(f1, dimension, precision)  
+            pheno2 = phenotype(f2, dimension, precision)
+            for i in pheno1:
+                if(i > max_domain):
+                    pheno1[i] = max_domain_bin
+                if(i < - max_domain):
+                    pheno1[i] = min_domain_bin
+            for i in pheno2:
+                if(i > max_domain):
+                    pheno2[i] = max_domain_bin
+                if(i < - max_domain):
+                    pheno2[i] = min_domain_bin
+            
+            return ((f1,0),(f2,0))
+        else:
+            return (indiv_1,indiv_2)
+    return crossover
+
+""" 
+# old version with rejecting of the "outsider" (values created out from the domain).
+# Uniform crossover 
 def uniform_cross(prob_cross, max_domain, precision, dimension):
     def crossover(indiv_1, indiv_2, prob_cross):
         value = random()
         if value < prob_cross:
             cromo_1 = indiv_1[0]
             cromo_2 = indiv_2[0]
-            #f1=[]
-            #f2=[]
             while True:
                 f1 = []
                 f2 = []
@@ -153,6 +194,8 @@ def uniform_cross(prob_cross, max_domain, precision, dimension):
                         f2.append(cromo_1[i])
                 pheno1 = phenotype(f1, dimension, precision)  
                 pheno2 = phenotype(f2, dimension, precision)
+                #print(pheno1,'ph1\n')
+                #print(pheno2,'ph2\n')
                 pheno = pheno1+pheno2
                 pheno.sort()
                 if(pheno[-1] <= max_domain):
@@ -160,7 +203,8 @@ def uniform_cross(prob_cross, max_domain, precision, dimension):
         else:
             return (indiv_1,indiv_2)
     return crossover
-    
+"""
+
 # Transposition
 '''
 def transposition(flanking):
@@ -247,6 +291,7 @@ def sea(numb_generations, size_pop, size_cromo, prob_mut, prob_cross, sel_parent
         # ------ Mutation
         descendentes = []
         for cromo,fit in progenitores:
+            print(cromo)
             novo_indiv = mutation(cromo,prob_mut)
             descendentes.append((novo_indiv,fitness_func(novo_indiv)))
         # New population
