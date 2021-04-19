@@ -176,12 +176,12 @@ def uniform_cross(prob_cross, max_domain, precision, dimension):
                     f2.append(cromo_1[i])
             pheno1 = phenotype(f1, dimension, precision)  
             pheno2 = phenotype(f2, dimension, precision)
-            for i,val in enumerate(pheno1):
+            for i, val in enumerate(pheno1):
                 if(val > max_domain):
                     pheno1[i] = max_domain
                 if(val < - max_domain):
                     pheno1[i] = - max_domain
-            for i,val in enumerate(pheno2):
+            for i, val in enumerate(pheno2):
                 if(val > max_domain):
                     pheno2[i] = max_domain
                 if(val < - max_domain):
@@ -196,11 +196,53 @@ def uniform_cross(prob_cross, max_domain, precision, dimension):
 
 
 # Transposition
-'''
-def transposition(flanking):
-
-'''
-
+def transposition(flank_size):
+    def transpose(indiv_1, indiv_2):
+        end = False
+        start = False
+        f1 = indiv_1
+        f2 = indiv_2
+        j = 0
+        
+        # define a random point in indiv_1
+        size_indiv = len(indiv_1)
+        rnd_index = randrange(2, size_indiv)
+        flanking = indiv_1[rnd_index-flank_size:rnd_index]
+        print('rnd_index', rnd_index)
+        print('flanking', flanking)
+        
+        while end == False:
+            # if flanking==slice of indiv_1
+            if (indiv_1[ (rnd_index+j)%size_indiv : (rnd_index+j+flank_size)%size_indiv ] == flanking):
+                end = True
+                end_indiv_1 = (rnd_index+j+flank_size)%size_indiv
+                print('end indiv_1: ', end_indiv_1)
+            else:
+                j += 1
+                
+        while start == False:
+            if (indiv_2[j : j+flank_size] == flanking):
+                start = True
+                start_indiv_2 = j+flank_size
+            else:
+                j += 1
+            
+        if end_indiv_1 == rnd_index or start == False:
+            print("trasposizione non avvenuta")
+            return indiv_1, indiv_2
+                
+        # now the transposition happens
+        i = 0
+        while (rnd_index+i)%size_indiv != end_indiv_1:
+            f1[(rnd_index+i)%size_indiv] = indiv_2[(start_indiv_2+i)%size_indiv]
+            f2[(start_indiv_2+i)%size_indiv] = indiv_1[(rnd_index+i)%size_indiv]
+            i += 1
+            print("trasposizione in corso")
+        return f1, f2
+    return transpose
+        
+        
+        
 '''
 STEP 4 - SURVIVALS SELECTION
 '''
