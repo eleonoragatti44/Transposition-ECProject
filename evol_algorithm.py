@@ -206,7 +206,7 @@ def transposition(flank_size):
         
         # define a random point in indiv_1
         size_indiv = len(indiv_1)
-        rnd_index = randrange(2, size_indiv)
+        rnd_index = randrange(flank_size, size_indiv)
         flanking = indiv_1[rnd_index-flank_size:rnd_index]
         print('rnd_index', rnd_index)
         print('flanking', flanking)
@@ -220,10 +220,12 @@ def transposition(flank_size):
             else:
                 j += 1
                 
+        j = 0
         while start == False:
             if (indiv_2[j : j+flank_size] == flanking):
                 start = True
                 start_indiv_2 = j+flank_size
+                print('start indiv_2: ', start_indiv_2)
             else:
                 j += 1
             
@@ -233,9 +235,19 @@ def transposition(flank_size):
                 
         # now the transposition happens
         i = 0
+        
+        #print('indiv1:\t', indiv_1)
+        #print('indiv2:\t', indiv_2)
+        #print('f1:\t', f1)
+        #print('f2:\t', f2)
+        
+        # repeat len(transposone) times
         while (rnd_index+i)%size_indiv != end_indiv_1:
             f1[(rnd_index+i)%size_indiv] = indiv_2[(start_indiv_2+i)%size_indiv]
             f2[(start_indiv_2+i)%size_indiv] = indiv_1[(rnd_index+i)%size_indiv]
+            # è come se le due righe qui sopra non stessero assegnando, come se f1 e f2 non venissero mai modificati
+            print('f1:\t', f1)
+            print('f2:\t', f2)
             i += 1
             print("trasposizione in corso")
         return f1, f2
