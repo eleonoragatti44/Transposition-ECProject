@@ -160,7 +160,7 @@ def muta_bin_gene(gene, prob_muta):
 # New version with different boundary process
 # Uniform crossover 
 def uniform_cross(prob_cross, max_domain, precision, dimension):
-    def crossover(indiv_1, indiv_2, prob_cross):
+    def crossover(indiv_1, indiv_2):
         value = random()
         if value < prob_cross:
             cromo_1 = indiv_1[0]
@@ -200,37 +200,38 @@ def transposition(flank_size):
     def transpose(indiv_1, indiv_2):
         end = False
         start = False
-        f1 = indiv_1
-        f2 = indiv_2
+        f1 = indiv_1[0]
+        f2 = indiv_2[0]
         j = 0
         
         # define a random point in indiv_1
-        size_indiv = len(indiv_1)
+        size_indiv = len(f1)
         rnd_index = randrange(flank_size, size_indiv)
-        flanking = indiv_1[rnd_index-flank_size:rnd_index]
-        print('rnd_index', rnd_index)
-        print('flanking', flanking)
+        flanking = f1[rnd_index-flank_size:rnd_index]
+        #print('rnd_index', rnd_index)
+        #print('flanking', flanking)
         
+        # looking for the second flanking sequence in the first indiv
         while end == False:
             # if flanking==slice of indiv_1
-            if (indiv_1[ (rnd_index+j)%size_indiv : (rnd_index+j+flank_size)%size_indiv ] == flanking):
+            if (f1[ (rnd_index+j)%size_indiv : (rnd_index+j+flank_size)%size_indiv ] == flanking):
                 end = True
-                end_indiv_1 = (rnd_index+j+flank_size)%size_indiv
-                print('end indiv_1: ', end_indiv_1)
+                end_indiv_1 = (rnd_index+j+flank_size)%size_indiv # final index of the second flanking sequence
+                #print('end indiv_1: ', end_indiv_1)
             else:
                 j += 1
                 
         j = 0
-        while start == False:
-            if (indiv_2[j : j+flank_size] == flanking):
+        while start == False and j <= size_indiv-flank_size:
+            if (f2[j : j+flank_size] == flanking):
                 start = True
-                start_indiv_2 = j+flank_size
-                print('start indiv_2: ', start_indiv_2)
+                start_indiv_2 = j+flank_size # final index of the flanking sequence in the second indiv
+                #print('start indiv_2: ', start_indiv_2)
             else:
                 j += 1
             
         if end_indiv_1 == rnd_index or start == False:
-            print("trasposizione non avvenuta")
+            #print("trasposizione non avvenuta")
             return indiv_1, indiv_2
                 
         # now the transposition happens
@@ -243,14 +244,14 @@ def transposition(flank_size):
         
         # repeat len(transposone) times
         while (rnd_index+i)%size_indiv != end_indiv_1:
-            f1[(rnd_index+i)%size_indiv] = indiv_2[(start_indiv_2+i)%size_indiv]
-            f2[(start_indiv_2+i)%size_indiv] = indiv_1[(rnd_index+i)%size_indiv]
+            f1[(rnd_index+i)%size_indiv] = indiv_2[0][(start_indiv_2+i)%size_indiv]
+            f2[(start_indiv_2+i)%size_indiv] = indiv_1[0][(rnd_index+i)%size_indiv]
             # è come se le due righe qui sopra non stessero assegnando, come se f1 e f2 non venissero mai modificati
-            print('f1:\t', f1)
-            print('f2:\t', f2)
+            #print('f1:\t', f1)
+            #print('f2:\t', f2)
             i += 1
-            print("trasposizione in corso")
-        return f1, f2
+            #print("trasposizione in corso")
+        return ((f1,0),(f2,0))
     return transpose
         
         
@@ -315,7 +316,7 @@ def ea(numb_generations, size_pop, prob_mut, prob_cross,
 !!!!!INTOCCABILE!!!!!
 '''
 
-def sea(numb_generations, size_pop, size_cromo, prob_mut, prob_cross, sel_parents, recombination, mutation, sel_survivors, fitness_func, gera_pop):
+def sea(numb_generations, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func, gera_pop):
     # inicialize population: indiv = (cromo,fit)
     populacao = gera_pop(size_pop,size_cromo)
     # evaluate population
@@ -331,7 +332,7 @@ def sea(numb_generations, size_pop, size_cromo, prob_mut, prob_cross, sel_parent
         for i in range(0,size_pop-1,2):
             indiv_1= mate_pool[i]
             indiv_2 = mate_pool[i+1]
-            filhos = recombination(indiv_1,indiv_2, prob_cross)
+            filhos = recombination(indiv_1,indiv_2)
             progenitores.extend(filhos) 
         # ------ Mutation
         descendentes = []
@@ -350,11 +351,12 @@ Best over all algorithm
 
 # return the average of the population
 def average_pop(populacao):
-    return sum([fit for cromo,fit in populacao])/len(populacao)
+    fitness_vec = [indiv[1] for indiv in populacao]
+    return sum(fitness_vec)/len(fitness_vec)
 
 # Simple [Binary] Evolutionary Algorithm 
 # Return the best plus, best by generation, average population by generation
-def sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,prob_cross,sel_parents,recombination,mutation,sel_survivors, fitness_func,gera_pop):
+def sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,sel_parents,recombination,mutation,sel_survivors, fitness_func,gera_pop):
     # inicializa população: indiv = (cromo,fit)
     populacao = gera_pop(size_pop,size_cromo)
     # avalia população
@@ -375,7 +377,7 @@ def sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,prob_cross,sel_
         for i in  range(0,size_pop-1,2):
             cromo_1= mate_pool[i]
             cromo_2 = mate_pool[i+1]
-            filhos = recombination(cromo_1,cromo_2, prob_cross)
+            filhos = recombination(cromo_1,cromo_2)
             progenitores.extend(filhos) 
         # ------ Mutation
         descendentes = []
@@ -394,24 +396,25 @@ def sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,prob_cross,sel_
     return best_pop(populacao),stat, stat_aver
 
 
-# return the best over all and the best average over all
-def sea_boa(numb_repetitions,numb_generations,size_pop, size_cromo, prob_mut,prob_cross,sel_parents,recombination,mutation,sel_survivors, fitness_func):
-    results_stat = [] # stat(s) of every rep.The index specifies the repetition of the sea alg.
-    results_stat_av = [] #sat_av(s) of every rep. The index specifies the repetition of the sea alg.
-    boa = []  # best over all
-    baoa = [] # best average over all
-    for i in range(numb_repetitions):
-        best, stat, stat_av = sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,prob_cross,sel_parents,recombination,mutation,sel_survivors, fitness_func)
-        results_stat.append(stat)
-        results_stat_av.append(stat_av)
-    for g in range(numb_generations):
-        boa.append(results_stat[0][g])
-        baoa.append(results_stat_av[0][g])
-        
-        for r in range(numb_repetitions):
-            if (boa[g] < results_stat[r][g]):
-                boa[g] = results_stat[r][g]
-            if (baoa[g] < results_stat_av[r][g]):
-                baoa[g] = results_stat_av[r][g]
-                
-    return(boa, baoa)
+
+def sea_boa_file(filename,numb_runs,numb_generations,size_pop, size_cromo, prob_mut,sel_parents,recombination,mutation,sel_survivors, fitness_func,gera_pop):
+    statistics = []
+    for i in range(numb_runs):
+        best,stat_best,stat_aver = sea_for_plot(numb_generations,size_pop, size_cromo, prob_mut,sel_parents,recombination,mutation,sel_survivors, fitness_func,gera_pop)
+        statistics.append(stat_best)
+    stat_gener = list(zip(*statistics))
+    boa = [min(g_i) for g_i in stat_gener] # minimization
+    aver_gener =  [sum(g_i)/len(g_i) for g_i in stat_gener]
+    stat_for_file = list(zip(*(boa,aver_gener)))
+    np.savetxt(filename,stat_for_file,delimiter = '\t')
+    print(stat_for_file)
+    """
+    with open(filename,'w') as f_out:
+        f_out.write(str(boa)+'\n'+str(aver_gener))
+    """
+    return boa,aver_gener
+
+def run_for_file(filename,numb_runs,numb_generations,size_pop, size_cromo, prob_mut,sel_parents,recombination,mutation,sel_survivors, fitness_func,gera_pop):
+    with open(filename,'w') as f_out:
+        best = sea_boa(numb_runs,numb_generations,size_pop, size_cromo, prob_mut,sel_parents,recombination,mutation,sel_survivors,fitness_func,gera_pop)
+        f_out.write(str(best[0])+'\n'+str(best[1]))
