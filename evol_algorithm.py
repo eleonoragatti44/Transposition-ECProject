@@ -3,6 +3,16 @@ from operator import itemgetter
 import numpy as np
 import math
 
+'''
+UTILS
+'''
+
+# return the average of the population
+def average_pop(population):
+    fitness_vec = [indiv[1] for indiv in population]
+    return sum(fitness_vec)/len(fitness_vec)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 '''
 REPRESENTATION
@@ -15,7 +25,6 @@ def cromo_len(max_domain, prec):
     len_max = len(max_domain_bin)
     return len_max
     
-    
 # Convert a float number into a binary string. 
 # It multiplies the the float for 10^(precision), cuts the decimal part, and then applies the binary conversion.
 def float_to_bin(number, max_domain, prec):
@@ -23,7 +32,6 @@ def float_to_bin(number, max_domain, prec):
     approx_max_domain = int(max_domain * 10**(prec))
     max_domain_bin = bin(approx_max_domain).lstrip("0b") 
     len_max = len(max_domain_bin)
-
     sign = 0
     # Use prec to define max lenght for decimals
     approx_number = int(number * 10**(prec))
@@ -31,7 +39,6 @@ def float_to_bin(number, max_domain, prec):
         sign += 1
         approx_number *= -1
     number_bin_str = bin(approx_number).lstrip("0b") 
-    
     # We add the zeros at the beginning of the bin represented number
     len_numb = len(number_bin_str)
     diff_len = len_max - len_numb
@@ -42,7 +49,6 @@ def float_to_bin(number, max_domain, prec):
         number_bin_str = '0' + number_bin_str
     else:
         number_bin_str = '1' + number_bin_str
-        
     return(number_bin_str)
 
 # convert a binary list to float.
@@ -91,25 +97,13 @@ def fit_rastrigin(dim, prec):
         return A * n + sum([x**2 - A * math.cos(2 * math.pi * x) for x in X])
     return rastrigin
 
-def fit_schwefel(dim, prec):
+def fit_dejong4(dim,prec): ## DA SISTEMAREEEEEEEEE
     """
-    schwefel function
-    domain = [-500; 500]
-    minimum at (420.9687,...,420.9687)
-    """
-    def schwefel(indiv):    
-        X = phenotype(indiv, dim, prec)
-        y = 420.968746*dim + sum([-x * math.sin(math.sqrt(math.fabs(x))) for x in X])
-        return y
-    return schwefel
-
-def fit_dejong(dim,prec):
-    """
-    quartic = DeJong 1
-    domain = [-5.12; 5.12]
+    quartic = DeJong 4
+    domain = [-1.28; 1.28]
     minimum 0 at (0,....,0)
     """
-    def dejong(indiv):
+    def dejong4(indiv):
         X = phenotype(indiv, dim, prec)
         n = len(X)
         return sum([ x**2 for x in X])
@@ -172,10 +166,9 @@ def muta_bin(max_domain,dimension,prec):
         old = indiv[:]
         cromo = indiv[:]
         len_cromo = int(len(indiv)) # cromosome length
-        len_mono_cromo = int(len_cromo/dimension) # length of the single coordinate in bit
-        
+        len_mono_cromo = int(len_cromo/dimension) # length of the single coordinate in bit    
         # jump from one mono_cromo to the next one
-        # and applied the mutation to the last len_cromo/3 bits
+        # and applied the mutation to the last len_cromo/2 bits
         for j in range(0, len_cromo, len_mono_cromo):
             for i in range(1, round(len_mono_cromo/2)):
                 cromo[len_mono_cromo+j-i] = muta_bin_gene(cromo[len_mono_cromo+j-i],prob_muta)
@@ -285,109 +278,27 @@ def sel_survivors_elite(elite):
         return new_population
     return elitism
 
-def best_pop(populacao):
-    populacao.sort(key=itemgetter(1))
-    return populacao[0]
+def best_pop(population):
+    population.sort(key=itemgetter(1))
+    return population[0]
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 '''
-EVOLUTIONARY ALGORITHM
+EVOLUTIONARY ALGORITHMS
 '''
 
-# Binary Evolutionary Algorithm
-def ea(numb_generations, size_pop, prob_mut, prob_cross,
-       sel_parents, recombination, mutation, sel_survivors,
-       fitness_func, dimension, max_domain, precision):
-    
-    # inicialize population: indiv = (cromo,fit)
-    populacao = gera_pop(size_pop, max_domain, precision, dimension)
-    # evaluate population
-    populacao = [(indiv[0], fitness_func(indiv[0], dimension, precision)) for indiv in populacao]
-    for i in range(numb_generations):
-        # sparents selection
-        mate_pool = sel_parents(populacao)
-    # Variation
-    # ------ Crossover
-        progenitores = []
-        for i in  range(0,size_pop-1,2):
-            indiv_1= mate_pool[i]
-            indiv_2 = mate_pool[i+1]
-            filhos = recombination(indiv_1, indiv_2, prob_cross, max_domain, precision, dimension)
-            progenitores.extend(filhos) 
-        # ------ Mutation
-        descendentes = []
-        for cromo,fit in progenitores:
-            novo_indiv = mutation(cromo, prob_mut, max_domain, dimension, precision)
-            descendentes.append((novo_indiv, fitness_func(novo_indiv, dimension, precision)))
-        # New population
-        populacao = sel_survivors(populacao, descendentes)
-        # Evaluate the new population
-        populacao = [(indiv[0], fitness_func(indiv[0], dimension, precision)) for indiv in populacao]     
-    return best_pop(populacao)
-
-
-'''
-!!!!!INTOCCABILE!!!!!
-'''
-
-def sea(numb_generations, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func, gera_pop):
-    # inicialize population: indiv = (cromo,fit)
-    populacao = gera_pop(size_pop, size_cromo)
-    # evaluate population
-    populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao]
+# Return: best at the end - best by generation - average population by generation
+def sea_same_pop(numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func):
+    population = [(indiv[0], fitness_func(indiv[0])) for indiv in population]
+    # For tatistics
+    stat = [best_pop(population)[1]]
+    stat_aver = [average_pop(population)]
     for j in range(numb_generations):
         print(j, end='\r')
-
-        # sparents selection
-        mate_pool = sel_parents(populacao)
-    # Variation
+        mate_pool = sel_parents(population)
+        # Variation
         # ------ Crossover
-        progenitores = []
-        for i in range(0,size_pop-1,2):
-            indiv_1= mate_pool[i]
-            indiv_2 = mate_pool[i+1]
-            filhos = recombination(indiv_1, indiv_2)
-            progenitores.extend(filhos) 
-        # ------ Mutation
-        descendentes = []
-        for cromo,fit in progenitores:
-            novo_indiv = mutation(cromo, prob_mut)
-            descendentes.append((novo_indiv, fitness_func(novo_indiv)))
-        # New population
-        populacao = sel_survivors(populacao, descendentes)
-        # Evaluate the new population
-        populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao]     
-    return best_pop(populacao)
-
-'''
-Best over all algorithm
-'''
-
-# return the average of the population
-def average_pop(populacao):
-    fitness_vec = [indiv[1] for indiv in populacao]
-    return sum(fitness_vec)/len(fitness_vec)
-
-# Simple [Binary] Evolutionary Algorithm 
-# Return the best plus, best by generation, average population by generation
-def sea_for_plot(numb_generations, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation,sel_survivors, fitness_func,gera_pop):
-    # inicializa população: indiv = (cromo,fit)
-    populacao = gera_pop(size_pop, size_cromo)
-    # avalia população
-    populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao]
-    
-    # para a estatística
-    stat = [best_pop(populacao)[1]]
-    stat_aver = [average_pop(populacao)]
-    
-    for j in range(numb_generations):
-        print(j, end='\r')
-
-        # selecciona progenitores
-        mate_pool = sel_parents(populacao)
-    # Variation
-    # ------ Crossover
         progenitores = []
         for i in  range(0, size_pop-1, 2):
             cromo_1 = mate_pool[i]
@@ -399,33 +310,26 @@ def sea_for_plot(numb_generations, size_pop, size_cromo, prob_mut, sel_parents, 
         for indiv,fit in progenitores:
             novo_indiv = mutation(indiv, prob_mut)
             descendentes.append((novo_indiv, fitness_func(novo_indiv)))
-        # New population
-        populacao = sel_survivors(populacao, descendentes)
-        # Avalia nova _população
-        populacao = [(indiv[0], fitness_func(indiv[0])) for indiv in populacao] 
+        population = sel_survivors(population, descendentes)
+        population = [(indiv[0], fitness_func(indiv[0])) for indiv in population] 
+        # Update statistics
+        stat.append(best_pop(population)[1])
+        stat_aver.append(average_pop(population))
+    return best_pop(population), stat, stat_aver
 
-    # Estatística
-        stat.append(best_pop(populacao)[1])
-        stat_aver.append(average_pop(populacao))
-
-    return best_pop(populacao), stat, stat_aver
-
-
-def sea_boa_file(filename, numb_runs, numb_generations, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation,sel_survivors, fitness_func, gera_pop):
+# Run sea_same_pop, store results in 2 files
+# file1: best over all + average for every generation
+# file2: bast at the end of the run
+def run_file(filename, numb_runs, numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation,sel_survivors, fitness_func):
     statistics = []
+    bea = []
     for i in range(numb_runs):
-        best, stat_best, stat_aver = sea_for_plot(numb_generations, size_pop, size_cromo, prob_mut, sel_parents,
-                                                  recombination, mutation, sel_survivors, fitness_func,gera_pop)
+        best, stat_best, stat_aver = sea_same_pop(numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func)
         statistics.append(stat_best)
+        bea.append(best[1])
     stat_gener = list(zip(*statistics))
     boa = [min(g_i) for g_i in stat_gener] # minimization
     aver_gener =  [sum(g_i)/len(g_i) for g_i in stat_gener]
     stat_for_file = list(zip(*(boa,aver_gener)))
-    np.savetxt(filename, stat_for_file, delimiter = '\t')
-    return boa, aver_gener
-
-def run_for_file(filename, numb_runs, numb_generations, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func, gera_pop):
-    with open(filename,'w') as f_out:
-        best = sea_boa(numb_runs, numb_generations, size_pop, size_cromo, prob_mut, sel_parents,
-                       recombination, mutation, sel_survivors, fitness_func ,gera_pop)
-        f_out.write(str(best[0])+'\n'+str(best[1]))
+    np.savetxt(filename+'.dat', stat_for_file, delimiter='\t')
+    np.savetxt(filename+'_bea.dat', bea, delimiter='\n')
