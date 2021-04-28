@@ -12,6 +12,18 @@ def average_pop(population):
     fitness_vec = [indiv[1] for indiv in population]
     return sum(fitness_vec)/len(fitness_vec)
 
+def read_init_pop(filename):
+    pop_init = []
+    cromo = []
+    file = open(filename, 'r')
+    lines = file.readlines()
+    for line in lines:
+        for i in line.split():
+            cromo.append(int(i))
+        pop_init.append((cromo,0))
+        cromo = []
+    return pop_init
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 '''
@@ -117,7 +129,7 @@ STEP 1 - INITIALIZE POPULATION
 
 # Initialize population
 def gera_pop(max_domain, precision, dimension):
-    def pop(size_pop, size_cromo):
+    def pop(size_pop):
         return [(gera_indiv(max_domain, precision, dimension),0) for _ in range(size_pop)]
     return pop
 
@@ -289,7 +301,7 @@ EVOLUTIONARY ALGORITHMS
 '''
 
 # Return: best at the end - best by generation - average population by generation
-def sea_same_pop(numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func):
+def sea_same_pop(numb_generations, population, size_pop, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func):
     population = [(indiv[0], fitness_func(indiv[0])) for indiv in population]
     # For tatistics
     stat = [best_pop(population)[1]]
@@ -320,11 +332,11 @@ def sea_same_pop(numb_generations, population, size_pop, size_cromo, prob_mut, s
 # Run sea_same_pop, store results in 2 files
 # file1: best over all + average for every generation
 # file2: bast at the end of the run
-def run_file(filename, numb_runs, numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation,sel_survivors, fitness_func):
+def run_file(filename, numb_runs, numb_generations, population, size_pop, prob_mut, sel_parents, recombination, mutation,sel_survivors, fitness_func):
     statistics = []
     bea = []
     for i in range(numb_runs):
-        best, stat_best, stat_aver = sea_same_pop(numb_generations, population, size_pop, size_cromo, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func)
+        best, stat_best, stat_aver = sea_same_pop(numb_generations, population, size_pop, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func)
         statistics.append(stat_best)
         bea.append(best[1])
     stat_gener = list(zip(*statistics))
