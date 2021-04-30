@@ -24,6 +24,11 @@ def read_init_pop(filename):
         cromo = []
     return pop_init
 
+def get_data(filename):
+    data_raw = np.loadtxt(filename)
+    data = data_raw.transpose()
+    return data
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 '''
