@@ -102,11 +102,11 @@ STEP 0 - FITNESS
 '''
 
 def fit_rastrigin(dim, prec):
-    """
+    '''
     rastrigin function
     domain = [-5.12, 5.12]
     minimum at (0,....,0)
-    """
+    '''
     def rastrigin(indiv):
         X = phenotype(indiv, dim, prec)
         n = len(X)
@@ -114,18 +114,29 @@ def fit_rastrigin(dim, prec):
         return A * n + sum([x**2 - A * math.cos(2 * math.pi * x) for x in X])
     return rastrigin
 
-def fit_dejong4(dim,prec): ## DA SISTEMAREEEEEEEEE
-    """
-    quartic = DeJong 4
-    domain = [-1.28; 1.28]
-    minimum 0 at (0,....,0)
-    """
-    def dejong4(indiv):
+def fit_schwefel(dim, prec):
+    '''
+    schwefel function
+    domain = [-500; 500]
+    minimum at (420.9687,...,420.9687)
+    '''
+    def schwefel(indiv):
         X = phenotype(indiv, dim, prec)
-        n = len(X)
-        return sum([ x**2 for x in X])
-    return dejong
+        return sum([-x * math.sin(math.sqrt(math.fabs(x))) for x in X])
+    return schwefel
 
+
+def fit_quartic(dim, prec):
+    '''
+    quartic function
+    domain = [-1.28; 1.28]
+    minimum at (0,....,0)
+    '''
+    def quartic(indiv):
+        X = phenotype(indiv, dim, prec)
+        return sum([ (i+1) * x for i, x in enumerate(X)]) + random.uniform(0,1)
+    return quartic
+    
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
 '''
