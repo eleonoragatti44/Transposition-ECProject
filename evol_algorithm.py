@@ -341,6 +341,7 @@ def run_file(filename, numb_runs, numb_generations, population, size_pop, prob_m
     statistics = []
     bea = []
     for i in range(numb_runs):
+        print('run', i, end='\r')
         best, stat_best, stat_aver = sea_same_pop(numb_generations, population, size_pop, prob_mut, sel_parents, recombination, mutation, sel_survivors, fitness_func)
         statistics.append(stat_best)
         bea.append(best[1])
