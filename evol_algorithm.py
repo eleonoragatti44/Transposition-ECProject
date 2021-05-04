@@ -177,7 +177,7 @@ def tour_sel(t_size):
     return tournament
 
 def one_tour(population,size):
-    """Maximization Problem. Deterministic"""
+    """Minimization Problem. Deterministic"""
     pool = sample(population, size)
     pool.sort(key=itemgetter(1))
     return pool[0]
