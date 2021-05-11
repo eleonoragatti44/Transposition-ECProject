@@ -1,3 +1,7 @@
+'''
+Code inspired by Ernesto Costa's codes for Evolutionary Computation course
+'''
+
 from random import random, randint, sample, uniform, randrange
 from operator import itemgetter
 import numpy as np
