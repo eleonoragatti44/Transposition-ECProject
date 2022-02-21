@@ -11,4 +11,5 @@ We study in the landscape of evolutionary algorithm a bio-inspired variation ope
 Contributors
 
 Eleonora Gatti - University of Milan
+
 Giulio Taiocchi - University of Milan
