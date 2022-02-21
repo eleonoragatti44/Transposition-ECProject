@@ -1,6 +1,6 @@
 # Transposition, a bio-inspired operator
 
-Evolutionary Computation's project. The course was delivered by the University of Coimbra in the academic year 2020-21 and helde by prof. [Ernesto Costa](https://ernesto.dei.uc.pt/)
+Evolutionary Computation's project. The course was delivered by the University of Coimbra in the academic year 2020-21 and helded by prof. [Ernesto Costa](https://ernesto.dei.uc.pt/)
 
 ## Description
 
